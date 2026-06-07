@@ -44,4 +44,12 @@ describe('NotificationButton', () => {
     render(<NotificationButton />)
     expect(screen.getByText(/notificações ativas/i)).toBeInTheDocument()
   })
+
+  it('mostra mensagem de bloqueio quando permissão foi negada', () => {
+    Object.defineProperty(Notification, 'permission', { value: 'denied', configurable: true })
+    Object.defineProperty(navigator, 'userAgent', { value: 'Chrome', configurable: true })
+    Object.defineProperty(navigator, 'standalone', { value: true, configurable: true })
+    render(<NotificationButton />)
+    expect(screen.getByText(/bloqueadas/i)).toBeInTheDocument()
+  })
 })
