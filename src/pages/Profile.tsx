@@ -16,14 +16,16 @@ const badgeLabels: Record<string, string> = {
 export default function Profile() {
   const { user, logout } = useAuth()
 
+  if (!user) return null
+
   const { data: score, isLoading: loadingScore, isError, refetch } = useQuery({
-    queryKey: ['score', user!.id],
-    queryFn: () => getUserScore(user!.id),
+    queryKey: ['score', user.id],
+    queryFn: () => getUserScore(user.id),
   })
 
-  const { data: badges, isLoading: loadingBadges } = useQuery({
-    queryKey: ['badges', user!.id],
-    queryFn: () => getUserBadges(user!.id),
+  const { data: badges, isLoading: loadingBadges, isError: isBadgesError } = useQuery({
+    queryKey: ['badges', user.id],
+    queryFn: () => getUserBadges(user.id),
   })
 
   if (loadingScore || loadingBadges)
@@ -49,7 +51,7 @@ export default function Profile() {
         <div className="bg-white rounded-2xl shadow p-4 space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-600">Score</span>
-            <span className="text-2xl font-bold text-amber-500">{score.score.toFixed(1)}</span>
+            <span className="text-2xl font-bold text-amber-500">{(score.score ?? 0).toFixed(1)}</span>
           </div>
           <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
             <div>Pagou: <strong>{score.times_paid}x</strong></div>
@@ -60,7 +62,10 @@ export default function Profile() {
         </div>
       )}
 
-      {badges && badges.length > 0 && (
+      {isBadgesError && (
+        <p className="text-sm text-red-400 text-center">Erro ao carregar badges.</p>
+      )}
+      {!isBadgesError && badges && badges.length > 0 && (
         <div className="bg-white rounded-2xl shadow p-4 space-y-2">
           <p className="text-sm font-medium text-gray-700">Badges</p>
           <ul className="space-y-1">
