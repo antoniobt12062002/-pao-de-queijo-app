@@ -36,4 +36,35 @@ describe('AuthCallback', () => {
     expect(window.history.replaceState).toHaveBeenCalledWith({}, '', '/')
     expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true })
   })
+
+  it('redireciona para /login quando token é inválido (JWT malformado)', () => {
+    const badToken = 'header.NOTBASE64!!!.sig'
+
+    render(
+      <MemoryRouter initialEntries={[`/auth/callback?token=${badToken}`]}>
+        <AuthProvider>
+          <Routes>
+            <Route path="/auth/callback" element={<AuthCallback />} />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>
+    )
+
+    expect(mockNavigate).toHaveBeenCalledWith('/login', { replace: true })
+    expect(localStorage.getItem('token')).toBeNull()
+  })
+
+  it('redireciona para /login quando não há token na URL', () => {
+    render(
+      <MemoryRouter initialEntries={['/auth/callback']}>
+        <AuthProvider>
+          <Routes>
+            <Route path="/auth/callback" element={<AuthCallback />} />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>
+    )
+
+    expect(mockNavigate).toHaveBeenCalledWith('/login', { replace: true })
+  })
 })

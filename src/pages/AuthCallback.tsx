@@ -9,25 +9,26 @@ export default function AuthCallback() {
 
   useEffect(() => {
     const token = params.get('token')
-    if (token) {
-      try {
-        // JWT base64url → base64 standard antes de decodificar
-        const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
-        const payload = JSON.parse(atob(b64))
-        login(token, {
-          id: payload.sub,
-          name: payload.name ?? '',
-          email: payload.email ?? '',
-          role: payload.role ?? 'member',
-        })
-      } catch {
-        navigate('/login', { replace: true })
-        return
-      }
+    if (!token) {
+      navigate('/login', { replace: true })
+      return
     }
-    window.history.replaceState({}, '', '/')
-    navigate('/', { replace: true })
-  }, [])
+    try {
+      // JWT base64url → base64 standard antes de decodificar
+      const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+      const payload = JSON.parse(atob(b64))
+      login(token, {
+        id: payload.sub,
+        name: payload.name ?? '',
+        email: payload.email ?? '',
+        role: payload.role ?? 'member',
+      })
+      window.history.replaceState({}, '', '/')
+      navigate('/', { replace: true })
+    } catch {
+      navigate('/login', { replace: true })
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="min-h-screen flex items-center justify-center">
