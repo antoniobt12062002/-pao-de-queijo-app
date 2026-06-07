@@ -24,15 +24,17 @@ describe('rounds API', () => {
   })
 
   it('confirmRound chama POST /rounds/:id/confirm', async () => {
-    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: {} })
-    await confirmRound('abc')
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { message: 'confirmed' } })
+    const result = await confirmRound('abc')
     expect(apiClient.post).toHaveBeenCalledWith('/rounds/abc/confirm')
+    expect(result.message).toBe('confirmed')
   })
 
   it('cancelRound chama POST /rounds/:id/cancel', async () => {
-    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: {} })
-    await cancelRound('abc')
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: { message: 'cancelled' } })
+    const result = await cancelRound('abc')
     expect(apiClient.post).toHaveBeenCalledWith('/rounds/abc/cancel')
+    expect(result.message).toBe('cancelled')
   })
 
   it('participate chama POST com quantity', async () => {
@@ -49,10 +51,19 @@ describe('rounds API', () => {
 
   it('getParticipations chama GET /rounds/:id/participations', async () => {
     vi.mocked(apiClient.get).mockResolvedValueOnce({
-      data: { participations: [], total_quantity: 0 },
+      data: {
+        participations: [{ user_id: 'u1', name: 'Alice', quantity: 2 }],
+        total_quantity: 2,
+      },
     })
     const result = await getParticipations('abc')
     expect(apiClient.get).toHaveBeenCalledWith('/rounds/abc/participations')
-    expect(result.total_quantity).toBe(0)
+    expect(result.total_quantity).toBe(2)
+    expect(result.participations[0].name).toBe('Alice')
+  })
+
+  it('getTodayRound propaga erro da API', async () => {
+    vi.mocked(apiClient.get).mockRejectedValueOnce({ response: { status: 404 } })
+    await expect(getTodayRound()).rejects.toMatchObject({ response: { status: 404 } })
   })
 })

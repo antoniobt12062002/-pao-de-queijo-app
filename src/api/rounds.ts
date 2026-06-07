@@ -28,12 +28,14 @@ export async function getTodayRound(): Promise<Round> {
   return data
 }
 
-export async function confirmRound(id: string): Promise<void> {
-  await apiClient.post(`/rounds/${id}/confirm`)
+export async function confirmRound(id: string): Promise<{ message: string }> {
+  const { data } = await apiClient.post<{ message: string }>(`/rounds/${id}/confirm`)
+  return data
 }
 
-export async function cancelRound(id: string): Promise<void> {
-  await apiClient.post(`/rounds/${id}/cancel`)
+export async function cancelRound(id: string): Promise<{ message: string }> {
+  const { data } = await apiClient.post<{ message: string }>(`/rounds/${id}/cancel`)
+  return data
 }
 
 export async function getParticipations(roundId: string): Promise<ParticipationsResponse> {
