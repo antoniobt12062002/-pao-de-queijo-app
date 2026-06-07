@@ -50,3 +50,8 @@ export async function participate(roundId: string, quantity: number): Promise<vo
 export async function removeParticipation(roundId: string): Promise<void> {
   await apiClient.delete(`/rounds/${roundId}/participate`)
 }
+
+export async function getRounds(): Promise<Round[]> {
+  const { data } = await apiClient.get<Round[]>('/rounds')
+  return data
+}

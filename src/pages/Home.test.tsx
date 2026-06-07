@@ -45,7 +45,7 @@ describe('Home', () => {
       notify_at: '', closes_at: '', is_payer: false,
     })
     renderHome()
-    await waitFor(() => expect(screen.getByText(/aguardando/i)).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText(/aguardando confirmação do pagador/i)).toBeInTheDocument())
   })
 
   it('mostra botão participar quando status é open', async () => {
