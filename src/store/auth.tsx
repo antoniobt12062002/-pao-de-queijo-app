@@ -16,16 +16,34 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
+function isUser(v: unknown): v is User {
+  return (
+    typeof v === 'object' &&
+    v !== null &&
+    typeof (v as User).id === 'string' &&
+    typeof (v as User).name === 'string' &&
+    typeof (v as User).email === 'string' &&
+    typeof (v as User).role === 'string'
+  )
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(() => {
-    const stored = localStorage.getItem('user')
-    return stored ? JSON.parse(stored) : null
+    try {
+      const stored = localStorage.getItem('user')
+      if (!stored) return null
+      const parsed = JSON.parse(stored) as unknown
+      return isUser(parsed) ? parsed : null
+    } catch {
+      localStorage.removeItem('user')
+      return null
+    }
   })
 
-  const login = (token: string, user: User) => {
+  const login = (token: string, newUser: User) => {
     localStorage.setItem('token', token)
-    localStorage.setItem('user', JSON.stringify(user))
-    setUser(user)
+    localStorage.setItem('user', JSON.stringify(newUser))
+    setUser(newUser)
   }
 
   const logout = () => {
