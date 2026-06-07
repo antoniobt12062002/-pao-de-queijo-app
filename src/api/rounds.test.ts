@@ -1,0 +1,58 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { apiClient } from './client'
+import {
+  getTodayRound,
+  confirmRound,
+  cancelRound,
+  participate,
+  removeParticipation,
+  getParticipations,
+} from './rounds'
+
+vi.mock('./client', () => ({
+  apiClient: { get: vi.fn(), post: vi.fn(), delete: vi.fn() },
+}))
+
+describe('rounds API', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('getTodayRound chama GET /rounds/today', async () => {
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { id: '1', status: 'open' } })
+    const result = await getTodayRound()
+    expect(apiClient.get).toHaveBeenCalledWith('/rounds/today')
+    expect(result.id).toBe('1')
+  })
+
+  it('confirmRound chama POST /rounds/:id/confirm', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: {} })
+    await confirmRound('abc')
+    expect(apiClient.post).toHaveBeenCalledWith('/rounds/abc/confirm')
+  })
+
+  it('cancelRound chama POST /rounds/:id/cancel', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: {} })
+    await cancelRound('abc')
+    expect(apiClient.post).toHaveBeenCalledWith('/rounds/abc/cancel')
+  })
+
+  it('participate chama POST com quantity', async () => {
+    vi.mocked(apiClient.post).mockResolvedValueOnce({ data: {} })
+    await participate('abc', 2)
+    expect(apiClient.post).toHaveBeenCalledWith('/rounds/abc/participate', { quantity: 2 })
+  })
+
+  it('removeParticipation chama DELETE', async () => {
+    vi.mocked(apiClient.delete).mockResolvedValueOnce({ data: {} })
+    await removeParticipation('abc')
+    expect(apiClient.delete).toHaveBeenCalledWith('/rounds/abc/participate')
+  })
+
+  it('getParticipations chama GET /rounds/:id/participations', async () => {
+    vi.mocked(apiClient.get).mockResolvedValueOnce({
+      data: { participations: [], total_quantity: 0 },
+    })
+    const result = await getParticipations('abc')
+    expect(apiClient.get).toHaveBeenCalledWith('/rounds/abc/participations')
+    expect(result.total_quantity).toBe(0)
+  })
+})
