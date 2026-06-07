@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Settings } from 'lucide-react'
+import { toast } from 'sonner'
 import { getConfigs, updateConfig } from '../api/config'
 import { getRotation, skipRotation } from '../api/rotation'
 import { useAuth } from '../store/auth'
@@ -40,12 +42,22 @@ function AdminContent() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['config'] })
       setEditKey(null)
+      toast.success('Configuração salva!')
+    },
+    onError: () => {
+      toast.error('Erro ao salvar configuração.')
     },
   })
 
   const skipMut = useMutation({
     mutationFn: skipRotation,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['rotation'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['rotation'] })
+      toast.success('Posição avançada!')
+    },
+    onError: () => {
+      toast.error('Erro ao avançar posição.')
+    },
   })
 
   if (loadingConfig || loadingRotation)
@@ -60,9 +72,12 @@ function AdminContent() {
 
   return (
     <div className="p-4 pt-6 space-y-6">
-      <h1 className="text-xl font-bold text-gray-800">Administração</h1>
+      <div className="flex items-center gap-2">
+        <Settings className="w-5 h-5 text-amber-500" />
+        <h1 className="text-xl font-bold text-gray-800">Administração</h1>
+      </div>
 
-      <section className="bg-white rounded-2xl shadow p-4 space-y-3">
+      <section className="bg-white rounded-3xl shadow-md p-4 space-y-3">
         <h2 className="text-sm font-semibold text-gray-700">Configurações</h2>
         {configs?.map((c) => (
           <div key={c.key} className="space-y-1">
@@ -72,12 +87,12 @@ function AdminContent() {
                 <input
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
-                  className="flex-1 border rounded-lg px-2 py-1 text-sm"
+                  className="flex-1 border border-gray-200 rounded-xl px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
                 />
                 <button
                   onClick={() => updateMut.mutate({ key: editKey!, value: editValue })}
                   disabled={updateMut.isPending}
-                  className="text-sm bg-amber-500 text-white px-3 py-1 rounded-lg disabled:opacity-50"
+                  className="text-sm bg-amber-500 text-white px-3 py-1 rounded-xl disabled:opacity-50 hover:bg-amber-600 transition-colors"
                 >
                   Salvar
                 </button>
@@ -97,12 +112,12 @@ function AdminContent() {
         ))}
       </section>
 
-      <section className="bg-white rounded-2xl shadow p-4 space-y-3">
+      <section className="bg-white rounded-3xl shadow-md p-4 space-y-3">
         <h2 className="text-sm font-semibold text-gray-700">Fila de Pagamento</h2>
         <button
           onClick={() => skipMut.mutate()}
           disabled={skipMut.isPending}
-          className="w-full border border-amber-400 text-amber-600 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50"
+          className="w-full border border-amber-400 text-amber-600 py-2.5 rounded-2xl text-sm font-medium disabled:opacity-50 hover:bg-amber-50 transition-colors"
         >
           Avançar posição (skip)
         </button>
