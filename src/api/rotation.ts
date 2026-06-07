@@ -2,7 +2,6 @@ import { apiClient } from './client'
 
 export type RotationMember = {
   user_id: string
-  name: string
   position: number
 }
 

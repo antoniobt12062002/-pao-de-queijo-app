@@ -24,7 +24,7 @@ export default function Scores() {
     <div className="p-4 pt-6 space-y-4">
       <h1 className="text-xl font-bold text-gray-800">Placar</h1>
       <ul className="space-y-2">
-        {data?.map((score, index) => (
+        {data?.slice().sort((a, b) => b.score - a.score).map((score, index) => (
           <li
             key={score.user_id}
             className="bg-white rounded-xl px-4 py-3 shadow-sm flex items-center gap-3"

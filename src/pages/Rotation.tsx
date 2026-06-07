@@ -25,7 +25,7 @@ export default function Rotation() {
       <h1 className="text-xl font-bold text-gray-800">Fila de Pagamento</h1>
       <ul className="space-y-2">
         {data?.members.map((member, index) => {
-          const isCurrent = index === data.current_pos
+          const isCurrent = member.user_id === data.current_payer_id
           return (
             <li
               key={member.user_id}
@@ -34,7 +34,7 @@ export default function Rotation() {
               }`}
             >
               <span className="text-sm font-bold text-gray-400 w-5">{index + 1}</span>
-              <span className="flex-1 text-sm font-medium text-gray-800">{member.name}</span>
+              <span className="flex-1 text-sm font-medium text-gray-800 font-mono text-xs">{member.user_id}</span>
               {isCurrent && (
                 <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
                   Próximo
