@@ -33,7 +33,10 @@ export default function Home() {
     enabled: round?.status === 'closed' || round?.status === 'open',
   })
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ['round', 'today'] })
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ['round', 'today'] })
+    if (round?.id) qc.invalidateQueries({ queryKey: ['participations', round.id] })
+  }
   const confirmMut = useMutation({ mutationFn: () => confirmRound(round!.id), onSuccess: invalidate })
   const cancelMut = useMutation({ mutationFn: () => cancelRound(round!.id), onSuccess: invalidate })
   const participateMut = useMutation({ mutationFn: () => participate(round!.id, quantity), onSuccess: invalidate })
