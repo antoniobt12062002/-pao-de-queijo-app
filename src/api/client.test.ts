@@ -5,6 +5,11 @@ describe('apiClient', () => {
   beforeEach(() => {
     localStorage.clear()
     vi.resetModules()
+    Object.defineProperty(window, 'location', {
+      value: { href: '' },
+      writable: true,
+      configurable: true,
+    })
   })
 
   it('exporta apiClient com métodos HTTP', async () => {
@@ -30,5 +35,26 @@ describe('apiClient', () => {
     await handler.rejected({ response: { status: 401 } }).catch(() => {})
     expect(localStorage.getItem('token')).toBeNull()
     expect(localStorage.getItem('user')).toBeNull()
+  })
+
+  it('baseURL termina com /v1', async () => {
+    const { apiClient } = await import('./client')
+    expect(apiClient.defaults.baseURL).toMatch(/\/v1$/)
+  })
+
+  it('interceptor de response redireciona para /login em 401', async () => {
+    localStorage.setItem('token', 'tok')
+    const { apiClient } = await import('./client')
+    const handler = (apiClient.interceptors.response as any).handlers[0]
+    await handler.rejected({ response: { status: 401 } }).catch(() => {})
+    expect(window.location.href).toBe('/login')
+  })
+
+  it('request sem token não adiciona Authorization header', async () => {
+    const { apiClient } = await import('./client')
+    const handler = (apiClient.interceptors.request as any).handlers[0]
+    const config = { headers: new axios.AxiosHeaders() }
+    const result = await handler.fulfilled(config)
+    expect(result.headers.has('Authorization')).toBe(false)
   })
 })
