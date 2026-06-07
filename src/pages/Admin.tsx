@@ -30,13 +30,13 @@ function AdminContent() {
     queryFn: getConfigs,
   })
 
-  const { data: rotation, isLoading: loadingRotation } = useQuery({
+  const { data: rotation, isLoading: loadingRotation, isError: isRotationError } = useQuery({
     queryKey: ['rotation'],
     queryFn: getRotation,
   })
 
   const updateMut = useMutation({
-    mutationFn: () => updateConfig(editKey!, editValue),
+    mutationFn: ({ key, value }: { key: string; value: string }) => updateConfig(key, value),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['config'] })
       setEditKey(null)
@@ -56,7 +56,7 @@ function AdminContent() {
       </div>
     )
 
-  if (isError) return <ErrorMessage onRetry={refetch} />
+  if (isError || isRotationError) return <ErrorMessage onRetry={refetch} />
 
   return (
     <div className="p-4 pt-6 space-y-6">
@@ -75,7 +75,7 @@ function AdminContent() {
                   className="flex-1 border rounded-lg px-2 py-1 text-sm"
                 />
                 <button
-                  onClick={() => updateMut.mutate()}
+                  onClick={() => updateMut.mutate({ key: editKey!, value: editValue })}
                   disabled={updateMut.isPending}
                   className="text-sm bg-amber-500 text-white px-3 py-1 rounded-lg disabled:opacity-50"
                 >
@@ -107,11 +107,14 @@ function AdminContent() {
           Avançar posição (skip)
         </button>
         <ul className="space-y-1 pt-1">
-          {rotation?.members.map((m, i) => (
-            <li key={m.user_id} className="text-sm text-gray-600 flex gap-2">
-              <span className="text-gray-400">{i + 1}.</span> {m.user_id}
-            </li>
-          ))}
+          {rotation?.members
+            .slice()
+            .sort((a, b) => a.position - b.position)
+            .map((m) => (
+              <li key={m.user_id} className="text-sm text-gray-600 flex gap-2">
+                <span className="text-gray-400">{m.position + 1}.</span> {m.user_id}
+              </li>
+            ))}
         </ul>
       </section>
     </div>
