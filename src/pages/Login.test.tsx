@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { AuthProvider } from '../store/auth'
@@ -22,6 +22,8 @@ const renderLogin = () =>
   )
 
 describe('Login', () => {
+  beforeEach(() => vi.clearAllMocks())
+
   it('renderiza campos de email e senha', () => {
     renderLogin()
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
@@ -42,5 +44,19 @@ describe('Login', () => {
     fireEvent.click(screen.getByRole('button', { name: /entrar/i }))
 
     await waitFor(() => expect(loginWithEmail).toHaveBeenCalledWith('a@a.com', 'pass'))
+  })
+
+  it('exibe mensagem de erro quando login falha', async () => {
+    const { loginWithEmail } = await import('../api/auth')
+    vi.mocked(loginWithEmail).mockRejectedValueOnce(new Error('401'))
+    renderLogin()
+
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'a@a.com' } })
+    fireEvent.change(screen.getByLabelText(/senha/i), { target: { value: 'wrong' } })
+    fireEvent.click(screen.getByRole('button', { name: /entrar/i }))
+
+    await waitFor(() =>
+      expect(screen.getByText('Email ou senha inválidos.')).toBeInTheDocument()
+    )
   })
 })
