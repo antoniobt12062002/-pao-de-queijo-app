@@ -5,11 +5,11 @@ describe('apiClient', () => {
   beforeEach(() => {
     localStorage.clear()
     vi.resetModules()
-    Object.defineProperty(window, 'location', {
-      value: { href: '' },
-      writable: true,
-      configurable: true,
-    })
+    vi.stubGlobal('location', { href: '' })
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
   it('exporta apiClient com métodos HTTP', async () => {
@@ -22,6 +22,7 @@ describe('apiClient', () => {
     localStorage.setItem('token', 'test-jwt')
     const { apiClient } = await import('./client')
     const handler = (apiClient.interceptors.request as any).handlers[0]
+    expect(handler, 'Axios request interceptor handler not found — Axios internals may have changed').toBeTruthy()
     const config = { headers: new axios.AxiosHeaders() }
     const result = await handler.fulfilled(config)
     expect(result.headers.get('Authorization')).toBe('Bearer test-jwt')
@@ -32,6 +33,7 @@ describe('apiClient', () => {
     localStorage.setItem('user', '{}')
     const { apiClient } = await import('./client')
     const handler = (apiClient.interceptors.response as any).handlers[0]
+    expect(handler, 'Axios response interceptor handler not found — Axios internals may have changed').toBeTruthy()
     await handler.rejected({ response: { status: 401 } }).catch(() => {})
     expect(localStorage.getItem('token')).toBeNull()
     expect(localStorage.getItem('user')).toBeNull()
@@ -46,6 +48,7 @@ describe('apiClient', () => {
     localStorage.setItem('token', 'tok')
     const { apiClient } = await import('./client')
     const handler = (apiClient.interceptors.response as any).handlers[0]
+    expect(handler, 'Axios response interceptor handler not found — Axios internals may have changed').toBeTruthy()
     await handler.rejected({ response: { status: 401 } }).catch(() => {})
     expect(window.location.href).toBe('/login')
   })
@@ -53,6 +56,7 @@ describe('apiClient', () => {
   it('request sem token não adiciona Authorization header', async () => {
     const { apiClient } = await import('./client')
     const handler = (apiClient.interceptors.request as any).handlers[0]
+    expect(handler, 'Axios request interceptor handler not found — Axios internals may have changed').toBeTruthy()
     const config = { headers: new axios.AxiosHeaders() }
     const result = await handler.fulfilled(config)
     expect(result.headers.has('Authorization')).toBe(false)
