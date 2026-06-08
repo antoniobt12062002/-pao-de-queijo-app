@@ -51,7 +51,14 @@ export async function removeParticipation(roundId: string): Promise<void> {
   await apiClient.delete(`/rounds/${roundId}/participate`)
 }
 
+type PaginatedRoundsResponse = {
+  data: Round[]
+  total: number
+  page: number
+  limit: number
+}
+
 export async function getRounds(): Promise<Round[]> {
-  const { data } = await apiClient.get<Round[]>('/rounds')
-  return data
+  const { data } = await apiClient.get<PaginatedRoundsResponse>('/rounds')
+  return data.data
 }
