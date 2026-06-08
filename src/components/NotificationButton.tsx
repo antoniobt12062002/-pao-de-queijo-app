@@ -17,7 +17,8 @@ export default function NotificationButton() {
         return
       }
       localStorage.removeItem('fcm_token')
-      const token = await getToken(getFirebaseMessaging(), { vapidKey: VAPID_KEY })
+      const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' })
+      const token = await getToken(getFirebaseMessaging(), { vapidKey: VAPID_KEY, serviceWorkerRegistration: swReg })
       await registerDevice(token)
       localStorage.setItem('fcm_token', token)
       setStatus('done')

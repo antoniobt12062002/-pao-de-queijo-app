@@ -34,7 +34,8 @@ export default function NotificationPrompt() {
       }
       const { getFirebaseMessaging, getToken, VAPID_KEY } = await import('../lib/firebase')
       const { registerDevice } = await import('../api/devices')
-      const token = await getToken(getFirebaseMessaging(), { vapidKey: VAPID_KEY })
+      const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' })
+      const token = await getToken(getFirebaseMessaging(), { vapidKey: VAPID_KEY, serviceWorkerRegistration: swReg })
       const saved = localStorage.getItem('fcm_token')
       if (token && token !== saved) {
         await registerDevice(token)
