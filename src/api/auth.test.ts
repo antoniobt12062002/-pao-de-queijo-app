@@ -7,14 +7,14 @@ vi.mock('./client', () => ({ apiClient: { post: vi.fn() } }))
 describe('loginWithEmail', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('faz POST /auth/login e retorna token e user', async () => {
+  it('faz POST /auth/login e retorna o token JWT', async () => {
     vi.mocked(apiClient.post).mockResolvedValueOnce({
-      data: { token: 'abc', user: { id: '1', name: 'A', email: 'a@a.com', role: 'member' } },
+      data: { token: 'abc' },
     })
 
-    const result = await loginWithEmail('a@a.com', 'pass')
+    const token = await loginWithEmail('a@a.com', 'pass')
 
     expect(apiClient.post).toHaveBeenCalledWith('/auth/login', { email: 'a@a.com', password: 'pass' })
-    expect(result.token).toBe('abc')
+    expect(token).toBe('abc')
   })
 })

@@ -1,11 +1,8 @@
 import { apiClient } from './client'
-import type { User } from '../store/auth'
 
-type LoginResponse = { token: string; user: User }
-
-export async function loginWithEmail(email: string, password: string): Promise<LoginResponse> {
-  const { data } = await apiClient.post<LoginResponse>('/auth/login', { email, password })
-  return data
+export async function loginWithEmail(email: string, password: string): Promise<string> {
+  const { data } = await apiClient.post<{ token: string }>('/auth/login', { email, password })
+  return data.token
 }
 
 export function getGithubOAuthUrl(): string {
