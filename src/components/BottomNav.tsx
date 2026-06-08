@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 import { Home, RotateCcw, Trophy, User, Settings } from 'lucide-react'
 import { useAuth } from '../store/auth'
 
