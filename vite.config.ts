@@ -10,7 +10,7 @@ export default defineConfig({
       includeAssets: ['icon-192.png', 'icon-512.png'],
       manifest: {
         name: 'Pão de Queijo',
-        short_name: 'PdQ',
+        short_name: 'Pão de Queijo',
         start_url: '/',
         display: 'standalone',
         background_color: '#ffffff',

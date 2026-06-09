@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { CheckCircle, XCircle, Users, ChevronRight, CalendarDays } from 'lucide-react'
+import { CheckCircle, XCircle, Users, ChevronRight, CalendarDays, Trophy, RotateCcw } from 'lucide-react'
 import {
   getTodayRound,
   confirmRound,
@@ -12,6 +12,8 @@ import {
   getRounds,
 } from '../api/rounds'
 import { getUserScore } from '../api/scores'
+import { getRotation } from '../api/rotation'
+import { getUsers } from '../api/users'
 import { useAuth } from '../store/auth'
 import Skeleton from '../components/Skeleton'
 import ErrorMessage from '../components/ErrorMessage'
@@ -79,6 +81,17 @@ export default function Home() {
     queryKey: ['rounds'],
     queryFn: getRounds,
   })
+
+  // Rotation (for empty state)
+  const { data: rotation } = useQuery({
+    queryKey: ['rotation'],
+    queryFn: getRotation,
+  })
+  const { data: users } = useQuery({
+    queryKey: ['users'],
+    queryFn: getUsers,
+  })
+  const getUserName = (id: string) => users?.find((u) => u.id === id)?.name ?? id
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ['round', 'today'] })
@@ -292,6 +305,52 @@ export default function Home() {
                 </li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {/* Empty state: show when no round today and no history */}
+        {!isLoading && !round && (!recentHistory || recentHistory.length === 0) && (
+          <div className="space-y-3">
+            {/* Next payer card */}
+            {rotation && rotation.current_payer_id && (
+              <div className="bg-white rounded-3xl shadow-md px-5 py-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <RotateCcw size={15} className="text-amber-400" />
+                  <p className="text-sm font-semibold text-gray-700">Próximo pagador</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Avatar name={getUserName(rotation.current_payer_id)} size="lg" />
+                  <div>
+                    <p className="font-semibold text-gray-900">{getUserName(rotation.current_payer_id)}</p>
+                    <p className="text-xs text-gray-400">Está na vez quando a rodada abrir</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Personal stats card */}
+            {myScore && (
+              <div className="bg-white rounded-3xl shadow-md px-5 py-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Trophy size={15} className="text-amber-400" />
+                  <p className="text-sm font-semibold text-gray-700">Suas estatísticas</p>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="bg-amber-50 rounded-2xl py-3">
+                    <p className="text-xl font-bold text-amber-600">{myScore.times_paid}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Vezes pagou</p>
+                  </div>
+                  <div className="bg-amber-50 rounded-2xl py-3">
+                    <p className="text-xl font-bold text-amber-600">{myScore.times_participated}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Participações</p>
+                  </div>
+                  <div className="bg-amber-50 rounded-2xl py-3">
+                    <p className="text-xl font-bold text-amber-600">{myScore.score.toFixed(0)}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Score</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
