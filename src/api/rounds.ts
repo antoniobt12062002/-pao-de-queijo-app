@@ -62,3 +62,15 @@ export async function getRounds(): Promise<Round[]> {
   const { data } = await apiClient.get<PaginatedRoundsResponse>('/rounds')
   return data.data
 }
+
+export async function adminCreateRound(date: string, payerId?: string): Promise<void> {
+  await apiClient.post('/admin/rounds', { date, payer_id: payerId ?? '' })
+}
+
+export async function adminForceCloseRound(id: string): Promise<void> {
+  await apiClient.post(`/admin/rounds/${id}/force-close`)
+}
+
+export async function adminChangePayer(roundId: string, userId: string): Promise<void> {
+  await apiClient.put(`/admin/rounds/${roundId}/payer`, { user_id: userId })
+}

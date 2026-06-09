@@ -1,14 +1,13 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { loginWithEmail, getGithubOAuthUrl } from '../api/auth'
-import { useAuth } from '../store/auth'
+import { registerUser } from '../api/users'
 
-export default function Login() {
+export default function Signup() {
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { login } = useAuth()
   const navigate = useNavigate()
 
   const handleSubmit = async (e: FormEvent) => {
@@ -16,18 +15,17 @@ export default function Login() {
     setError('')
     setLoading(true)
     try {
-      const token = await loginWithEmail(email, password)
-      const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
-      const payload = JSON.parse(atob(b64))
-      login(token, {
-        id: payload.sub,
-        name: payload.name ?? '',
-        email: payload.email ?? '',
-        role: payload.role ?? 'member',
-      })
-      navigate('/')
-    } catch {
-      setError('Email ou senha inválidos.')
+      await registerUser(name, email, password)
+      navigate('/login', { state: { registered: true } })
+    } catch (err: any) {
+      const msg = err?.response?.data?.error
+      if (msg?.includes('already registered')) {
+        setError('Este email já está cadastrado.')
+      } else if (msg?.includes('8 characters')) {
+        setError('A senha precisa ter pelo menos 8 caracteres.')
+      } else {
+        setError('Erro ao criar conta. Tente novamente.')
+      }
     } finally {
       setLoading(false)
     }
@@ -36,15 +34,25 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-amber-50 px-4">
       <div className="w-full max-w-sm bg-white rounded-3xl shadow-lg overflow-hidden">
-        {/* Branded header strip */}
         <div className="bg-gradient-to-br from-amber-400 to-amber-600 px-8 py-8 flex flex-col items-center gap-2">
           <span className="text-5xl" role="img" aria-label="pão de queijo">🧀</span>
           <h1 className="text-2xl font-bold text-white tracking-tight">Pão de Queijo</h1>
-          <p className="text-amber-100 text-sm">Gestão de rodadas</p>
+          <p className="text-amber-100 text-sm">Criar conta</p>
         </div>
 
         <div className="p-8">
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nome</label>
+              <input
+                id="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-300"
+              />
+            </div>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
               <input
@@ -64,6 +72,7 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                minLength={8}
                 className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-300"
               />
             </div>
@@ -73,35 +82,16 @@ export default function Login() {
               disabled={loading}
               className="w-full bg-amber-500 text-white py-2.5 rounded-2xl font-semibold hover:bg-amber-600 disabled:opacity-50 transition-colors"
             >
-              {loading ? 'Entrando…' : 'Entrar'}
+              {loading ? 'Criando conta…' : 'Criar conta'}
             </button>
           </form>
 
-          <p className="mt-5 text-center text-sm text-gray-500">
-            Não tem conta?{' '}
-            <Link to="/signup" className="text-amber-600 font-medium hover:underline">
-              Criar conta
+          <p className="mt-6 text-center text-sm text-gray-500">
+            Já tem conta?{' '}
+            <Link to="/login" className="text-amber-600 font-medium hover:underline">
+              Entrar
             </Link>
           </p>
-
-          <div className="mt-4">
-            {(() => {
-              const githubUrl = getGithubOAuthUrl()
-              if (!githubUrl || githubUrl.startsWith('undefined')) return null
-              return (
-                <a
-                  href={githubUrl}
-                  aria-label="Entrar com GitHub"
-                  className="flex items-center justify-center gap-2 border border-gray-200 rounded-2xl px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
-                  </svg>
-                  Entrar com GitHub
-                </a>
-              )
-            })()}
-          </div>
         </div>
       </div>
     </div>

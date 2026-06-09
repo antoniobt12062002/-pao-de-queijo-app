@@ -3,6 +3,7 @@ import { Toaster } from 'sonner'
 import ProtectedRoute from './components/ProtectedRoute'
 import AppLayout from './components/AppLayout'
 import Login from './pages/Login'
+import Signup from './pages/Signup'
 import AuthCallback from './pages/AuthCallback'
 import Home from './pages/Home'
 import Rotation from './pages/Rotation'
@@ -15,6 +16,7 @@ export default function App() {
     <>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
