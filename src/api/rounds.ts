@@ -63,8 +63,8 @@ export async function getRounds(): Promise<Round[]> {
   return data.data
 }
 
-export async function adminCreateRound(date: string, payerId?: string): Promise<void> {
-  await apiClient.post('/admin/rounds', { date, payer_id: payerId ?? '' })
+export async function adminCreateRound(date: string, payerId?: string, notifyAt?: string): Promise<void> {
+  await apiClient.post('/admin/rounds', { date, payer_id: payerId ?? '', notify_at: notifyAt ?? '' })
 }
 
 export async function adminForceCloseRound(id: string): Promise<void> {

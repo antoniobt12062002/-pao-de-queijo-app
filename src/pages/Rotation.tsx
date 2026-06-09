@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import { getRotation, skipRotation } from '../api/rotation'
+import { getUsers } from '../api/users'
 import { useAuth } from '../store/auth'
 import Avatar from '../components/Avatar'
 import Skeleton from '../components/Skeleton'
@@ -14,6 +15,13 @@ export default function Rotation() {
     queryKey: ['rotation'],
     queryFn: getRotation,
   })
+
+  const { data: users } = useQuery({
+    queryKey: ['users'],
+    queryFn: getUsers,
+  })
+
+  const getUserName = (id: string) => users?.find((u) => u.id === id)?.name ?? id
 
   const skipMut = useMutation({
     mutationFn: skipRotation,
@@ -57,6 +65,7 @@ export default function Rotation() {
       <ul className="space-y-2">
         {data?.members.map((member, index) => {
           const isCurrent = member.user_id === data.current_payer_id
+          const name = getUserName(member.user_id)
           return (
             <li
               key={member.user_id}
@@ -66,12 +75,12 @@ export default function Rotation() {
             >
               <span className="text-sm font-bold text-gray-400 w-5">{index + 1}</span>
               <Avatar
-                name={member.user_id}
+                name={name}
                 size="md"
                 className={isCurrent ? 'ring-2 ring-amber-400' : ''}
               />
-              <span className="flex-1 text-xs font-medium text-gray-600 font-mono truncate">
-                {member.user_id}
+              <span className="flex-1 text-sm font-medium text-gray-800 truncate">
+                {name}
               </span>
               {isCurrent && (
                 <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">

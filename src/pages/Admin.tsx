@@ -27,7 +27,7 @@ function AdminContent() {
   const qc = useQueryClient()
   const [editKey, setEditKey] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
-  const [createDate, setCreateDate] = useState('')
+  const [createDateTime, setCreateDateTime] = useState('')
   const [createPayerId, setCreatePayerId] = useState('')
 
   const { data: configs, isLoading: loadingConfig, isError, refetch } = useQuery({
@@ -95,11 +95,14 @@ function AdminContent() {
   })
 
   const createRoundMut = useMutation({
-    mutationFn: () => adminCreateRound(createDate, createPayerId || undefined),
+    mutationFn: () => {
+      const datePart = createDateTime.split('T')[0]
+      return adminCreateRound(datePart, createPayerId || undefined, createDateTime)
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['round', 'today'] })
       qc.invalidateQueries({ queryKey: ['rounds'] })
-      setCreateDate('')
+      setCreateDateTime('')
       setCreatePayerId('')
       toast.success('Rodada criada!')
     },
@@ -230,14 +233,12 @@ function AdminContent() {
           <Calendar className="w-4 h-4 text-blue-500" />
           <h2 className="text-sm font-semibold text-gray-700">Criar rodada para data específica</h2>
         </div>
-        <div className="flex gap-2">
-          <input
-            type="date"
-            value={createDate}
-            onChange={(e) => setCreateDate(e.target.value)}
-            className="flex-1 border border-gray-200 rounded-xl px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
-          />
-        </div>
+        <input
+          type="datetime-local"
+          value={createDateTime}
+          onChange={(e) => setCreateDateTime(e.target.value)}
+          className="w-full border border-gray-200 rounded-xl px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
+        />
         <select
           value={createPayerId}
           onChange={(e) => setCreatePayerId(e.target.value)}
@@ -250,7 +251,7 @@ function AdminContent() {
         </select>
         <button
           onClick={() => createRoundMut.mutate()}
-          disabled={!createDate || createRoundMut.isPending}
+          disabled={!createDateTime || createRoundMut.isPending}
           className="w-full bg-blue-500 text-white py-2.5 rounded-2xl text-sm font-semibold disabled:opacity-50 hover:bg-blue-600 transition-colors"
         >
           {createRoundMut.isPending ? 'Criando…' : 'Criar rodada'}
