@@ -1,4 +1,5 @@
-import { useRef, useState, useCallback, ReactNode } from 'react'
+import { useRef, useState, useCallback } from 'react'
+import type { ReactNode } from 'react'
 import { RefreshCw } from 'lucide-react'
 
 const THRESHOLD = 70
