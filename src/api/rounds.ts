@@ -24,7 +24,9 @@ export type ParticipationsResponse = {
 }
 
 export async function getTodayRound(): Promise<Round> {
-  const { data } = await apiClient.get<Round>('/rounds/today')
+  // Pass the client's local date so the server (UTC) finds the correct round
+  const localDate = new Date().toLocaleDateString('en-CA') // YYYY-MM-DD in local timezone
+  const { data } = await apiClient.get<Round>(`/rounds/today?date=${localDate}`)
   return data
 }
 
