@@ -309,7 +309,7 @@ export default function Home() {
                   <div className="flex items-center gap-2">
                     {historyIcon[r.status]}
                     <span className="text-gray-600">
-                      {new Date(r.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                      {new Date(r.date.substring(0, 10) + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
                     </span>
                   </div>
                   <span className="text-xs text-gray-400 capitalize">{statusConfig[r.status]?.label}</span>
