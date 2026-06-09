@@ -7,6 +7,7 @@ import { useAuth } from '../store/auth'
 import Avatar from '../components/Avatar'
 import Skeleton from '../components/Skeleton'
 import ErrorMessage from '../components/ErrorMessage'
+import PullToRefresh from '../components/PullToRefresh'
 
 export default function Rotation() {
   const { user } = useAuth()
@@ -45,7 +46,15 @@ export default function Rotation() {
 
   if (isError) return <ErrorMessage onRetry={refetch} />
 
+  const handleRefresh = async () => {
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ['rotation'] }),
+      qc.invalidateQueries({ queryKey: ['users'] }),
+    ])
+  }
+
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <div className="p-4 pt-6 space-y-4">
       <div className="flex items-center gap-2">
         <RotateCcw className="w-5 h-5 text-amber-500" />
@@ -92,5 +101,6 @@ export default function Rotation() {
         })}
       </ul>
     </div>
+    </PullToRefresh>
   )
 }

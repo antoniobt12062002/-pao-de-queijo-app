@@ -19,6 +19,7 @@ import Skeleton from '../components/Skeleton'
 import ErrorMessage from '../components/ErrorMessage'
 import Avatar from '../components/Avatar'
 import CountdownTimer from '../components/CountdownTimer'
+import PullToRefresh from '../components/PullToRefresh'
 
 function greeting() {
   const h = new Date().getHours()
@@ -123,7 +124,17 @@ export default function Home() {
     ?.filter((r) => r.id !== round?.id)
     .slice(0, 5)
 
+  const handleRefresh = async () => {
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ['round', 'today'] }),
+      qc.invalidateQueries({ queryKey: ['rounds'] }),
+      qc.invalidateQueries({ queryKey: ['rotation'] }),
+      qc.invalidateQueries({ queryKey: ['score', user!.id] }),
+    ])
+  }
+
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <div className="pb-24">
       {/* Header */}
       <div className="bg-gradient-to-br from-amber-400 to-amber-500 px-4 pt-10 pb-6">
@@ -355,5 +366,6 @@ export default function Home() {
         )}
       </div>
     </div>
+    </PullToRefresh>
   )
 }

@@ -6,7 +6,14 @@ import { AuthProvider } from './store/auth'
 import App from './App'
 import './index.css'
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnMount: 'always',
+      staleTime: 0,
+    },
+  },
+})
 
 async function refreshFcmToken() {
   if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return
