@@ -10,6 +10,7 @@ export type Round = {
   notify_at: string
   closes_at: string
   is_payer?: boolean
+  actual_cost?: number
 }
 
 export type Participation = {
@@ -63,6 +64,10 @@ type PaginatedRoundsResponse = {
 export async function getRounds(): Promise<Round[]> {
   const { data } = await apiClient.get<PaginatedRoundsResponse>('/rounds')
   return data.data
+}
+
+export async function setActualCost(roundId: string, cost: number): Promise<void> {
+  await apiClient.put(`/rounds/${roundId}/cost`, { cost })
 }
 
 export async function adminCreateRound(date: string, payerId?: string, notifyAt?: string): Promise<void> {

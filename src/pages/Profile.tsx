@@ -1,8 +1,10 @@
-import { useQuery } from '@tanstack/react-query'
-import { CreditCard, Users, Zap, SkipForward } from 'lucide-react'
+import { useState } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { CreditCard, Users, Zap, SkipForward, CalendarOff, Plus, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuth } from '../store/auth'
 import { getUserScore, getUserBadges } from '../api/scores'
+import { getAbsences, markAbsent, removeAbsence } from '../api/absences'
 import Avatar from '../components/Avatar'
 import Skeleton from '../components/Skeleton'
 import ErrorMessage from '../components/ErrorMessage'
@@ -18,6 +20,8 @@ const badgeLabels: Record<string, string> = {
 
 export default function Profile() {
   const { user, logout } = useAuth()
+  const qc = useQueryClient()
+  const [newAbsenceDate, setNewAbsenceDate] = useState('')
 
   if (!user) return null
 
@@ -29,6 +33,30 @@ export default function Profile() {
   const { data: badges, isLoading: loadingBadges, isError: isBadgesError } = useQuery({
     queryKey: ['badges', user.id],
     queryFn: () => getUserBadges(user.id),
+  })
+
+  const { data: absences } = useQuery({
+    queryKey: ['absences'],
+    queryFn: getAbsences,
+  })
+
+  const markAbsentMut = useMutation({
+    mutationFn: (date: string) => markAbsent(date),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['absences'] })
+      setNewAbsenceDate('')
+      toast.success('Ausência registrada!')
+    },
+    onError: () => toast.error('Essa data já está registrada.'),
+  })
+
+  const removeAbsenceMut = useMutation({
+    mutationFn: (date: string) => removeAbsence(date),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['absences'] })
+      toast.success('Ausência removida.')
+    },
+    onError: () => toast.error('Erro ao remover ausência.'),
   })
 
   if (loadingScore || loadingBadges)
@@ -128,6 +156,57 @@ export default function Profile() {
           </ul>
         </div>
       )}
+
+      {/* Ausências planejadas */}
+      <div className="bg-white rounded-3xl shadow-md p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <CalendarOff className="w-4 h-4 text-amber-400" />
+          <p className="text-sm font-medium text-gray-700">Ausências planejadas</p>
+        </div>
+        <p className="text-xs text-gray-400">
+          Nos dias marcados você será pulado na rotação automaticamente.
+        </p>
+
+        <div className="flex gap-2">
+          <input
+            type="date"
+            value={newAbsenceDate}
+            onChange={(e) => setNewAbsenceDate(e.target.value)}
+            min={new Date().toLocaleDateString('en-CA')}
+            className="flex-1 border border-gray-200 rounded-xl px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
+          />
+          <button
+            onClick={() => newAbsenceDate && markAbsentMut.mutate(newAbsenceDate)}
+            disabled={!newAbsenceDate || markAbsentMut.isPending}
+            className="flex items-center gap-1 bg-amber-500 text-white px-3 py-2 rounded-xl text-sm font-medium disabled:opacity-50 hover:bg-amber-600 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+
+        {absences && absences.length > 0 ? (
+          <ul className="space-y-1.5">
+            {absences.map((a) => (
+              <li key={a.id} className="flex items-center justify-between text-sm bg-gray-50 rounded-xl px-3 py-2">
+                <span className="text-gray-700">
+                  {new Date(a.date.substring(0, 10) + 'T12:00:00').toLocaleDateString('pt-BR', {
+                    weekday: 'short', day: '2-digit', month: 'short',
+                  })}
+                </span>
+                <button
+                  onClick={() => removeAbsenceMut.mutate(a.date.substring(0, 10))}
+                  disabled={removeAbsenceMut.isPending}
+                  className="text-gray-400 hover:text-red-400 transition-colors disabled:opacity-50"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-xs text-gray-400 text-center py-1">Nenhuma ausência registrada.</p>
+        )}
+      </div>
 
       <NotificationButton />
     </div>

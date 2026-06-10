@@ -10,6 +10,7 @@ import {
   removeParticipation,
   getParticipations,
   getRounds,
+  setActualCost,
 } from '../api/rounds'
 import { getUserScore } from '../api/scores'
 import { getRotation } from '../api/rotation'
@@ -46,6 +47,7 @@ export default function Home() {
   const { user } = useAuth()
   const qc = useQueryClient()
   const [quantity, setQuantity] = useState(1)
+  const [costInput, setCostInput] = useState('')
 
   // Today's round
   const { data: round, isLoading, isError, error, refetch } = useQuery({
@@ -118,6 +120,16 @@ export default function Home() {
     mutationFn: () => removeParticipation(round!.id),
     onSuccess: () => { invalidate(); toast.success('Participação removida.') },
     onError: () => toast.error('Erro ao remover participação.'),
+  })
+  const setCostMut = useMutation({
+    mutationFn: (cost: number) => setActualCost(round!.id, cost),
+    onSuccess: () => {
+      invalidate()
+      qc.invalidateQueries({ queryKey: ['rounds'] })
+      toast.success('Custo registrado!')
+      setCostInput('')
+    },
+    onError: () => toast.error('Erro ao registrar custo.'),
   })
 
   const recentHistory = history
@@ -273,6 +285,50 @@ export default function Home() {
                   <p className="text-sm text-gray-400 text-center py-2">Rodada cancelada.</p>
                 </div>
               )}
+
+              {round.status === 'closed' && round.is_payer && (
+                <div className="border-t border-gray-50 px-4 py-4">
+                  {round.actual_cost != null ? (
+                    <p className="text-sm text-center text-gray-500">
+                      Custo registrado: <strong className="text-amber-600">R$ {round.actual_cost.toFixed(2)}</strong>
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-xs text-gray-500 text-center">Qual foi o custo total da rodada?</p>
+                      <div className="flex gap-2">
+                        <input
+                          type="number"
+                          min="0.01"
+                          step="0.01"
+                          placeholder="R$ 0,00"
+                          value={costInput}
+                          onChange={(e) => setCostInput(e.target.value)}
+                          className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
+                        />
+                        <button
+                          onClick={() => {
+                            const v = parseFloat(costInput)
+                            if (!v || v <= 0) { toast.error('Digite um valor válido.'); return }
+                            setCostMut.mutate(v)
+                          }}
+                          disabled={setCostMut.isPending}
+                          className="bg-amber-500 text-white px-4 py-2 rounded-xl text-sm font-medium disabled:opacity-50 hover:bg-amber-600 transition-colors"
+                        >
+                          Salvar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {round.status === 'closed' && !round.is_payer && round.actual_cost != null && (
+                <div className="border-t border-gray-50 px-4 py-3">
+                  <p className="text-sm text-center text-gray-500">
+                    Custo total: <strong className="text-amber-600">R$ {round.actual_cost.toFixed(2)}</strong>
+                  </p>
+                </div>
+              )}
             </div>
           )
         })()}
@@ -312,7 +368,12 @@ export default function Home() {
                       {new Date(r.date.substring(0, 10) + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
                     </span>
                   </div>
-                  <span className="text-xs text-gray-400 capitalize">{statusConfig[r.status]?.label}</span>
+                  <div className="flex items-center gap-2">
+                    {r.actual_cost != null && (
+                      <span className="text-xs font-medium text-amber-600">R$ {r.actual_cost.toFixed(2)}</span>
+                    )}
+                    <span className="text-xs text-gray-400 capitalize">{statusConfig[r.status]?.label}</span>
+                  </div>
                 </li>
               ))}
             </ul>
