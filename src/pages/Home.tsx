@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { CheckCircle, XCircle, Users, ChevronRight, CalendarDays, Trophy, RotateCcw } from 'lucide-react'
+import { CheckCircle, XCircle, Users, CalendarDays, Trophy, RotateCcw, ChevronRight, DollarSign } from 'lucide-react'
 import {
   getTodayRound,
   confirmRound,
@@ -30,17 +30,10 @@ function greeting() {
 }
 
 const statusConfig = {
-  pending: { label: 'Aguardando confirmação', color: 'bg-amber-100 text-amber-700' },
-  open: { label: 'Aberta para participação', color: 'bg-green-100 text-green-700' },
-  closed: { label: 'Encerrada', color: 'bg-gray-100 text-gray-500' },
-  cancelled: { label: 'Cancelada', color: 'bg-red-100 text-red-500' },
-}
-
-const historyIcon = {
-  closed: <CheckCircle size={14} className="text-green-500" />,
-  cancelled: <XCircle size={14} className="text-red-400" />,
-  open: <CheckCircle size={14} className="text-green-500" />,
-  pending: <ChevronRight size={14} className="text-amber-400" />,
+  pending: { label: 'Aguardando confirmação', bg: 'bg-amber-50', text: 'text-amber-600', dot: 'bg-amber-400', border: 'border-l-amber-400' },
+  open: { label: 'Aberta para participação', bg: 'bg-emerald-50', text: 'text-emerald-600', dot: 'bg-emerald-400', border: 'border-l-emerald-400' },
+  closed: { label: 'Encerrada', bg: 'bg-slate-50', text: 'text-slate-500', dot: 'bg-slate-300', border: 'border-l-slate-300' },
+  cancelled: { label: 'Cancelada', bg: 'bg-red-50', text: 'text-red-500', dot: 'bg-red-400', border: 'border-l-red-400' },
 }
 
 export default function Home() {
@@ -49,7 +42,6 @@ export default function Home() {
   const [quantity, setQuantity] = useState(1)
   const [costInput, setCostInput] = useState('')
 
-  // Today's round
   const { data: round, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['round', 'today'],
     queryFn: getTodayRound,
@@ -58,20 +50,17 @@ export default function Home() {
       query.state.data?.status === 'open' ? 30_000 : false,
   })
 
-  // Payer name (depends on round.payer_id)
   const { data: payerScore } = useQuery({
     queryKey: ['score', round?.payer_id],
     queryFn: () => getUserScore(round!.payer_id),
     enabled: !!round?.payer_id,
   })
 
-  // User's own score
   const { data: myScore } = useQuery({
     queryKey: ['score', user!.id],
     queryFn: () => getUserScore(user!.id),
   })
 
-  // Participations (open or closed)
   const { data: participations } = useQuery({
     queryKey: ['participations', round?.id],
     queryFn: () => getParticipations(round!.id),
@@ -79,13 +68,11 @@ export default function Home() {
     refetchInterval: round?.status === 'open' ? 30_000 : false,
   })
 
-  // Recent history (last 5)
   const { data: history } = useQuery({
     queryKey: ['rounds'],
     queryFn: getRounds,
   })
 
-  // Rotation (for empty state)
   const { data: rotation } = useQuery({
     queryKey: ['rotation'],
     queryFn: getRotation,
@@ -132,9 +119,7 @@ export default function Home() {
     onError: () => toast.error('Erro ao registrar custo.'),
   })
 
-  const recentHistory = history
-    ?.filter((r) => r.id !== round?.id)
-    .slice(0, 5)
+  const recentHistory = history?.filter((r) => r.id !== round?.id).slice(0, 5)
 
   const handleRefresh = async () => {
     await Promise.all([
@@ -145,43 +130,41 @@ export default function Home() {
     ])
   }
 
+  const today = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })
+
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-    <div className="pb-24">
-      {/* Header */}
-      <div className="bg-gradient-to-br from-amber-400 to-amber-500 px-4 pt-10 pb-6">
-        <p className="text-amber-100 text-sm">{greeting()},</p>
-        <h1 className="text-2xl font-bold text-white">{user?.name.split(' ')[0]} 👋</h1>
-        {myScore && (
-          <div className="mt-3 flex items-center gap-4">
-            <div className="bg-white/20 rounded-2xl px-3 py-1.5 text-sm text-white">
-              Score <strong>{myScore.score.toFixed(1)}</strong>
-            </div>
-            {myScore.current_streak > 0 && (
-              <div className="bg-white/20 rounded-2xl px-3 py-1.5 text-sm text-white">
-                🔥 {myScore.current_streak} em sequência
-              </div>
-            )}
+      <div className="px-4 pt-6 pb-4 space-y-4 animate-fade-in">
+        {/* Page header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs text-slate-400 font-medium capitalize">{today}</p>
+            <h1 className="text-xl font-bold text-slate-900">{greeting()}, {user?.name.split(' ')[0]}</h1>
           </div>
-        )}
-      </div>
+          {myScore && (
+            <div className="flex items-center gap-1.5 bg-amber-500 text-white text-xs font-bold px-3 py-1.5 rounded-full">
+              <Trophy size={11} />
+              {myScore.score.toFixed(0)} pts
+            </div>
+          )}
+        </div>
 
-      <div className="px-4 -mt-4 space-y-4">
-        {/* Today's round card */}
+        {/* Today's round */}
         {isLoading && (
-          <div className="bg-white rounded-3xl shadow-md p-5 space-y-3">
-            <Skeleton className="h-5 w-32" />
-            <Skeleton className="h-16 w-full" />
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-3">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-14 w-full" />
+            <Skeleton className="h-10 w-full" />
           </div>
         )}
 
         {isError && (() => {
           const is404 = (error as any)?.response?.status === 404
           if (is404) return (
-            <div className="bg-white rounded-3xl shadow-md p-6 text-center">
-              <p className="text-4xl mb-2">🧀</p>
-              <p className="font-medium text-gray-700">Nenhuma rodada hoje</p>
-              <p className="text-sm text-gray-400 mt-1">Volte amanhã!</p>
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 text-center">
+              <div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-3">🧀</div>
+              <p className="font-semibold text-slate-700">Nenhuma rodada hoje</p>
+              <p className="text-sm text-slate-400 mt-1">Volte amanhã!</p>
             </div>
           )
           return <ErrorMessage onRetry={refetch} />
@@ -191,10 +174,12 @@ export default function Home() {
           const sc = statusConfig[round.status]
           const payerName = payerScore?.user_name ?? round.payer_id
           return (
-            <div className="bg-white rounded-3xl shadow-md overflow-hidden">
+            <div className={`bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden border-l-4 ${sc.border}`}>
               <div className="px-5 pt-5 pb-4">
-                <div className="flex items-center justify-between mb-3">
-                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${sc.color}`}>
+                {/* Status + countdown */}
+                <div className="flex items-center justify-between mb-4">
+                  <span className={`flex items-center gap-1.5 text-xs font-semibold ${sc.text}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`} />
                     {sc.label}
                   </span>
                   {round.status === 'open' && round.closes_at && (
@@ -202,13 +187,14 @@ export default function Home() {
                   )}
                 </div>
 
-                <div className="flex items-center gap-3">
+                {/* Payer */}
+                <div className="flex items-center gap-4">
                   <Avatar name={payerName} size="lg" />
                   <div>
-                    <p className="text-xs text-gray-500">Pagador de hoje</p>
-                    <p className="font-semibold text-gray-900">{payerName}</p>
+                    <p className="text-xs text-slate-400 font-medium">Pagador</p>
+                    <p className="font-bold text-slate-900 text-base">{payerName}</p>
                     {round.is_payer && (
-                      <p className="text-xs text-amber-600 font-medium">Você é o pagador! 🎉</p>
+                      <p className="text-xs text-amber-500 font-semibold mt-0.5">Você é o pagador hoje 🎉</p>
                     )}
                   </div>
                 </div>
@@ -216,48 +202,47 @@ export default function Home() {
 
               {/* Actions */}
               {round.status === 'pending' && round.is_payer && (
-                <div className="px-4 pb-4 flex gap-3">
+                <div className="px-5 pb-5 flex gap-3">
                   <button
                     onClick={() => confirmMut.mutate()}
                     disabled={confirmMut.isPending}
-                    className="flex-1 flex items-center justify-center gap-2 bg-amber-500 text-white py-3 rounded-2xl font-medium disabled:opacity-50 hover:bg-amber-600 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-2 bg-amber-500 text-white py-3 rounded-xl font-semibold text-sm disabled:opacity-50 hover:bg-amber-600 transition-colors active:scale-[0.98]"
                   >
-                    <CheckCircle size={18} /> Confirmar
+                    <CheckCircle size={16} /> Confirmar pagamento
                   </button>
                   <button
                     onClick={() => cancelMut.mutate()}
                     disabled={cancelMut.isPending}
-                    className="flex-1 flex items-center justify-center gap-2 border border-red-300 text-red-500 py-3 rounded-2xl font-medium disabled:opacity-50 hover:bg-red-50 transition-colors"
+                    className="flex items-center justify-center gap-2 border border-slate-200 text-slate-500 px-4 py-3 rounded-xl font-medium text-sm disabled:opacity-50 hover:bg-slate-50 transition-colors active:scale-[0.98]"
                   >
-                    <XCircle size={18} /> Cancelar
+                    <XCircle size={16} />
                   </button>
                 </div>
               )}
 
               {round.status === 'pending' && !round.is_payer && (
-                <div className="px-4 pb-4">
-                  <p className="text-sm text-gray-400 text-center py-2">
-                    Aguardando confirmação do pagador…
-                  </p>
+                <div className="px-5 pb-4">
+                  <p className="text-sm text-slate-400 text-center py-1">Aguardando confirmação do pagador…</p>
                 </div>
               )}
 
               {round.status === 'open' && (
-                <div className="border-t border-gray-50 px-4 py-4 space-y-3">
+                <div className="border-t border-slate-50 px-5 py-4 space-y-3">
                   <div className="flex items-center gap-3">
-                    <label htmlFor="qty" className="text-sm text-gray-600 whitespace-nowrap">Quantidade:</label>
-                    <input
-                      id="qty"
-                      type="number"
-                      min={1}
-                      value={quantity}
-                      onChange={(e) => setQuantity(Number(e.target.value))}
-                      className="w-16 border border-gray-200 rounded-xl px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
-                    />
+                    <div className="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2">
+                      <span className="text-xs text-slate-500 font-medium">Qtd</span>
+                      <input
+                        type="number"
+                        min={1}
+                        value={quantity}
+                        onChange={(e) => setQuantity(Number(e.target.value))}
+                        className="w-10 bg-transparent text-center text-sm font-bold text-slate-900 focus:outline-none"
+                      />
+                    </div>
                     {participations && (
-                      <span className="ml-auto flex items-center gap-1 text-xs text-gray-500">
-                        <Users size={13} />
-                        {participations.participations.length} participando
+                      <span className="flex items-center gap-1.5 text-xs text-slate-400 ml-auto">
+                        <Users size={12} />
+                        {participations.participations.length} participando · {participations.total_quantity} pãezinhos
                       </span>
                     )}
                   </div>
@@ -265,14 +250,14 @@ export default function Home() {
                     <button
                       onClick={() => participateMut.mutate()}
                       disabled={participateMut.isPending}
-                      className="flex-1 bg-amber-500 text-white py-3 rounded-2xl text-sm font-semibold disabled:opacity-50 hover:bg-amber-600 transition-colors"
+                      className="flex-1 bg-amber-500 text-white py-3 rounded-xl text-sm font-bold disabled:opacity-50 hover:bg-amber-600 transition-colors active:scale-[0.98]"
                     >
                       Participar
                     </button>
                     <button
                       onClick={() => removeMut.mutate()}
                       disabled={removeMut.isPending}
-                      className="flex-1 border border-gray-200 text-gray-600 py-3 rounded-2xl text-sm font-medium disabled:opacity-50 hover:bg-gray-50 transition-colors"
+                      className="px-4 border border-slate-200 text-slate-500 py-3 rounded-xl text-sm font-medium disabled:opacity-50 hover:bg-slate-50 transition-colors active:scale-[0.98]"
                     >
                       Sair
                     </button>
@@ -281,30 +266,34 @@ export default function Home() {
               )}
 
               {round.status === 'cancelled' && (
-                <div className="px-4 pb-4">
-                  <p className="text-sm text-gray-400 text-center py-2">Rodada cancelada.</p>
+                <div className="px-5 pb-4">
+                  <p className="text-sm text-slate-400 text-center py-1">Rodada cancelada.</p>
                 </div>
               )}
 
               {round.status === 'closed' && round.is_payer && (
-                <div className="border-t border-gray-50 px-4 py-4">
+                <div className="border-t border-slate-50 px-5 py-4">
                   {round.actual_cost != null ? (
-                    <p className="text-sm text-center text-gray-500">
-                      Custo registrado: <strong className="text-amber-600">R$ {round.actual_cost.toFixed(2)}</strong>
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-slate-500">Custo registrado</span>
+                      <span className="font-bold text-amber-600">R$ {round.actual_cost.toFixed(2)}</span>
+                    </div>
                   ) : (
                     <div className="space-y-2">
-                      <p className="text-xs text-gray-500 text-center">Qual foi o custo total da rodada?</p>
+                      <p className="text-xs text-slate-400 font-medium">Qual foi o custo total?</p>
                       <div className="flex gap-2">
-                        <input
-                          type="number"
-                          min="0.01"
-                          step="0.01"
-                          placeholder="R$ 0,00"
-                          value={costInput}
-                          onChange={(e) => setCostInput(e.target.value)}
-                          className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
-                        />
+                        <div className="flex-1 flex items-center gap-2 border border-slate-200 rounded-xl px-3 py-2.5">
+                          <DollarSign size={14} className="text-slate-400" />
+                          <input
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            placeholder="0,00"
+                            value={costInput}
+                            onChange={(e) => setCostInput(e.target.value)}
+                            className="flex-1 text-sm bg-transparent focus:outline-none"
+                          />
+                        </div>
                         <button
                           onClick={() => {
                             const v = parseFloat(costInput)
@@ -312,7 +301,7 @@ export default function Home() {
                             setCostMut.mutate(v)
                           }}
                           disabled={setCostMut.isPending}
-                          className="bg-amber-500 text-white px-4 py-2 rounded-xl text-sm font-medium disabled:opacity-50 hover:bg-amber-600 transition-colors"
+                          className="bg-amber-500 text-white px-4 rounded-xl text-sm font-semibold disabled:opacity-50 hover:bg-amber-600 transition-colors"
                         >
                           Salvar
                         </button>
@@ -323,29 +312,25 @@ export default function Home() {
               )}
 
               {round.status === 'closed' && !round.is_payer && round.actual_cost != null && (
-                <div className="border-t border-gray-50 px-4 py-3">
-                  <p className="text-sm text-center text-gray-500">
-                    Custo total: <strong className="text-amber-600">R$ {round.actual_cost.toFixed(2)}</strong>
-                  </p>
+                <div className="border-t border-slate-50 px-5 py-3 flex items-center justify-between">
+                  <span className="text-sm text-slate-500">Custo total</span>
+                  <span className="font-bold text-amber-600">R$ {round.actual_cost.toFixed(2)}</span>
                 </div>
               )}
             </div>
           )
         })()}
 
-        {/* Participants list (open or closed) */}
+        {/* Participations list */}
         {participations && participations.participations.length > 0 && (
-          <div className="bg-white rounded-3xl shadow-md px-5 py-4">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-semibold text-gray-700">Participantes</p>
-              <span className="text-xs text-gray-400">{participations.total_quantity} pãezinhos</span>
-            </div>
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Participantes</p>
             <div className="flex flex-wrap gap-2">
               {participations.participations.map((p) => (
-                <div key={p.user_id} className="flex items-center gap-1.5 bg-gray-50 rounded-full px-2.5 py-1">
+                <div key={p.user_id} className="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-1.5">
                   <Avatar name={p.name} size="sm" />
-                  <span className="text-xs text-gray-700">{p.name.split(' ')[0]}</span>
-                  <span className="text-xs text-gray-400">×{p.quantity}</span>
+                  <span className="text-xs font-medium text-slate-700">{p.name.split(' ')[0]}</span>
+                  <span className="text-xs text-slate-400 font-medium">×{p.quantity}</span>
                 </div>
               ))}
             </div>
@@ -354,79 +339,87 @@ export default function Home() {
 
         {/* Recent history */}
         {recentHistory && recentHistory.length > 0 && (
-          <div className="bg-white rounded-3xl shadow-md px-5 py-4">
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4">
             <div className="flex items-center gap-2 mb-3">
-              <CalendarDays size={15} className="text-gray-400" />
-              <p className="text-sm font-semibold text-gray-700">Histórico recente</p>
+              <CalendarDays size={14} className="text-slate-400" />
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Histórico recente</p>
             </div>
-            <ul className="space-y-2">
-              {recentHistory.map((r) => (
-                <li key={r.id} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    {historyIcon[r.status]}
-                    <span className="text-gray-600">
-                      {new Date(r.date.substring(0, 10) + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {r.actual_cost != null && (
-                      <span className="text-xs font-medium text-amber-600">R$ {r.actual_cost.toFixed(2)}</span>
-                    )}
-                    <span className="text-xs text-gray-400 capitalize">{statusConfig[r.status]?.label}</span>
-                  </div>
-                </li>
-              ))}
+            <ul className="space-y-0">
+              {recentHistory.map((r, i) => {
+                const sc = statusConfig[r.status]
+                return (
+                  <li
+                    key={r.id}
+                    className={`flex items-center justify-between py-2.5 ${i < recentHistory.length - 1 ? 'border-b border-slate-50' : ''}`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className={`w-2 h-2 rounded-full ${sc.dot}`} />
+                      <span className="text-sm text-slate-700 font-medium">
+                        {new Date(r.date.substring(0, 10) + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' })}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {r.actual_cost != null && (
+                        <span className="text-xs font-semibold text-amber-600">R$ {r.actual_cost.toFixed(2)}</span>
+                      )}
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${sc.bg} ${sc.text}`}>
+                        {sc.label}
+                      </span>
+                    </div>
+                  </li>
+                )
+              })}
             </ul>
           </div>
         )}
 
-        {/* Empty state: show when no round today and no history */}
+        {/* Empty state */}
         {!isLoading && !round && (!recentHistory || recentHistory.length === 0) && (
           <div className="space-y-3">
-            {/* Next payer card */}
             {rotation && rotation.current_payer_id && (
-              <div className="bg-white rounded-3xl shadow-md px-5 py-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <RotateCcw size={15} className="text-amber-400" />
-                  <p className="text-sm font-semibold text-gray-700">Próximo pagador</p>
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <RotateCcw size={14} className="text-slate-400" />
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Próximo pagador</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   <Avatar name={getUserName(rotation.current_payer_id)} size="lg" />
                   <div>
-                    <p className="font-semibold text-gray-900">{getUserName(rotation.current_payer_id)}</p>
-                    <p className="text-xs text-gray-400">Está na vez quando a rodada abrir</p>
+                    <p className="font-bold text-slate-900">{getUserName(rotation.current_payer_id)}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Na vez quando a rodada abrir</p>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Personal stats card */}
             {myScore && (
-              <div className="bg-white rounded-3xl shadow-md px-5 py-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Trophy size={15} className="text-amber-400" />
-                  <p className="text-sm font-semibold text-gray-700">Suas estatísticas</p>
+              <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <Trophy size={14} className="text-slate-400" />
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Suas estatísticas</p>
                 </div>
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="bg-amber-50 rounded-2xl py-3">
-                    <p className="text-xl font-bold text-amber-600">{myScore.times_paid}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Vezes pagou</p>
-                  </div>
-                  <div className="bg-amber-50 rounded-2xl py-3">
-                    <p className="text-xl font-bold text-amber-600">{myScore.times_participated}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Participações</p>
-                  </div>
-                  <div className="bg-amber-50 rounded-2xl py-3">
-                    <p className="text-xl font-bold text-amber-600">{myScore.score.toFixed(0)}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Score</p>
-                  </div>
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    { value: myScore.times_paid, label: 'Pagou' },
+                    { value: myScore.times_participated, label: 'Participou' },
+                    { value: myScore.score.toFixed(0), label: 'Score' },
+                  ].map(({ value, label }) => (
+                    <div key={label} className="bg-slate-50 rounded-xl py-3 text-center">
+                      <p className="text-2xl font-extrabold text-slate-900">{value}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{label}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
+
+            <div className="text-center py-4">
+              <p className="text-sm text-slate-400">Nenhuma rodada registrada ainda.</p>
+              <ChevronRight size={14} className="text-slate-300 mx-auto mt-1" />
+            </div>
           </div>
         )}
       </div>
-    </div>
     </PullToRefresh>
   )
 }

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { RotateCcw } from 'lucide-react'
+import { RotateCcw, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { getRotation, skipRotation } from '../api/rotation'
 import { getUsers } from '../api/users'
@@ -30,21 +30,8 @@ export default function Rotation() {
       qc.invalidateQueries({ queryKey: ['rotation'] })
       toast.success('Posição avançada!')
     },
-    onError: () => {
-      toast.error('Erro ao avançar posição.')
-    },
+    onError: () => toast.error('Erro ao avançar posição.'),
   })
-
-  if (isLoading)
-    return (
-      <div className="p-4 space-y-3">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-12 w-full" />
-        ))}
-      </div>
-    )
-
-  if (isError) return <ErrorMessage onRetry={refetch} />
 
   const handleRefresh = async () => {
     await Promise.all([
@@ -53,54 +40,89 @@ export default function Rotation() {
     ])
   }
 
+  if (isLoading)
+    return (
+      <div className="px-4 pt-6 space-y-3">
+        <Skeleton className="h-6 w-36" />
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full" />
+        ))}
+      </div>
+    )
+
+  if (isError) return <ErrorMessage onRetry={refetch} />
+
+  const currentIdx = data?.members.findIndex((m) => m.user_id === data.current_payer_id) ?? -1
+
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-    <div className="p-4 pt-6 space-y-4">
-      <div className="flex items-center gap-2">
-        <RotateCcw className="w-5 h-5 text-amber-500" />
-        <h1 className="text-xl font-bold text-gray-800">Fila de Pagamento</h1>
-      </div>
-
-      {user?.role === 'admin' && (
-        <button
-          onClick={() => skipMut.mutate()}
-          disabled={skipMut.isPending}
-          className="w-full border border-amber-400 text-amber-600 py-2.5 rounded-2xl text-sm font-medium disabled:opacity-50 hover:bg-amber-50 transition-colors"
-        >
-          Avançar posição (skip)
-        </button>
-      )}
-
-      <ul className="space-y-2">
-        {data?.members.map((member, index) => {
-          const isCurrent = member.user_id === data.current_payer_id
-          const name = getUserName(member.user_id)
-          return (
-            <li
-              key={member.user_id}
-              className={`flex items-center gap-3 bg-white rounded-3xl px-4 py-3 shadow-md ${
-                isCurrent ? 'border-2 border-amber-400' : ''
-              }`}
+      <div className="px-4 pt-6 pb-4 space-y-4 animate-fade-in">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-bold text-slate-900">Fila de Pagamento</h1>
+            <p className="text-sm text-slate-400 mt-0.5">{data?.members.length ?? 0} membros na rotação</p>
+          </div>
+          {user?.role === 'admin' && (
+            <button
+              onClick={() => skipMut.mutate()}
+              disabled={skipMut.isPending}
+              className="flex items-center gap-1.5 text-sm font-semibold text-amber-600 bg-amber-50 hover:bg-amber-100 px-3 py-2 rounded-xl transition-colors disabled:opacity-50"
             >
-              <span className="text-sm font-bold text-gray-400 w-5">{index + 1}</span>
-              <Avatar
-                name={name}
-                size="md"
-                className={isCurrent ? 'ring-2 ring-amber-400' : ''}
-              />
-              <span className="flex-1 text-sm font-medium text-gray-800 truncate">
-                {name}
-              </span>
-              {isCurrent && (
-                <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
-                  Próximo
+              <RotateCcw size={14} />
+              Skip
+            </button>
+          )}
+        </div>
+
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          {data?.members.map((member, index) => {
+            const isCurrent = member.user_id === data.current_payer_id
+            const isPast = currentIdx !== -1 && index < currentIdx
+            const name = getUserName(member.user_id)
+            const isMe = member.user_id === user?.id
+
+            return (
+              <div
+                key={member.user_id}
+                className={`flex items-center gap-4 px-5 py-4 ${
+                  index < (data?.members.length ?? 0) - 1 ? 'border-b border-slate-50' : ''
+                } ${isCurrent ? 'bg-amber-50' : isPast ? 'opacity-50' : ''}`}
+              >
+                <span className={`text-sm font-bold w-5 text-center ${
+                  isCurrent ? 'text-amber-500' : 'text-slate-300'
+                }`}>
+                  {index + 1}
                 </span>
-              )}
-            </li>
-          )
-        })}
-      </ul>
-    </div>
+                <Avatar
+                  name={name}
+                  size="md"
+                  className={isCurrent ? 'ring-2 ring-amber-400 ring-offset-1' : ''}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-semibold truncate ${
+                    isCurrent ? 'text-amber-700' : isMe ? 'text-slate-900' : 'text-slate-700'
+                  }`}>
+                    {name}
+                    {isMe && <span className="ml-2 text-[10px] font-bold text-amber-400 uppercase">você</span>}
+                  </p>
+                  {isCurrent && (
+                    <p className="text-xs text-amber-500 font-medium mt-0.5">Na vez agora</p>
+                  )}
+                </div>
+                {isCurrent && (
+                  <ChevronRight size={16} className="text-amber-400" />
+                )}
+              </div>
+            )
+          })}
+
+          {(!data?.members || data.members.length === 0) && (
+            <div className="px-5 py-8 text-center">
+              <p className="text-slate-400 text-sm">Nenhum membro na rotação.</p>
+            </div>
+          )}
+        </div>
+      </div>
     </PullToRefresh>
   )
 }
