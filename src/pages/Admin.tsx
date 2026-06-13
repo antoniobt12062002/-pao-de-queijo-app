@@ -53,7 +53,8 @@ function AdminContent() {
   const qc = useQueryClient()
   const [editKey, setEditKey] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
-  const [createDateTime, setCreateDateTime] = useState('')
+  const [createDate, setCreateDate] = useState('')
+  const [createTime, setCreateTime] = useState('')
   const [createPayerId, setCreatePayerId] = useState('')
   const [notifTitle, setNotifTitle] = useState('')
   const [notifBody, setNotifBody] = useState('')
@@ -119,11 +120,14 @@ function AdminContent() {
     onError: (err: any) => toast.error(err?.response?.data?.error ?? 'Erro ao alterar pagador.'),
   })
   const createRoundMut = useMutation({
-    mutationFn: () => adminCreateRound(createDateTime.split('T')[0], createPayerId || undefined, createDateTime),
+    mutationFn: () => {
+      const dateTime = createTime ? `${createDate}T${createTime}` : createDate
+      return adminCreateRound(createDate, createPayerId || undefined, dateTime)
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['round', 'today'] })
       qc.invalidateQueries({ queryKey: ['rounds', 'admin'] })
-      setCreateDateTime(''); setCreatePayerId('')
+      setCreateDate(''); setCreateTime(''); setCreatePayerId('')
       toast.success('Rodada criada!')
     },
     onError: (err: any) => toast.error(err?.response?.data?.error ?? 'Erro ao criar rodada.'),
@@ -269,12 +273,20 @@ function AdminContent() {
 
       {/* Criar rodada */}
       <Section title="Criar rodada para data específica" icon={Calendar} iconColor="text-blue-500">
-        <input
-          type="datetime-local"
-          value={createDateTime}
-          onChange={(e) => setCreateDateTime(e.target.value)}
-          className="w-full h-11 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
-        />
+        <div className="flex gap-2">
+          <input
+            type="date"
+            value={createDate}
+            onChange={(e) => setCreateDate(e.target.value)}
+            className="flex-1 min-w-0 h-11 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
+          />
+          <input
+            type="time"
+            value={createTime}
+            onChange={(e) => setCreateTime(e.target.value)}
+            className="w-28 h-11 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
+          />
+        </div>
         <select
           value={createPayerId}
           onChange={(e) => setCreatePayerId(e.target.value)}
@@ -285,7 +297,7 @@ function AdminContent() {
         </select>
         <button
           onClick={() => createRoundMut.mutate()}
-          disabled={!createDateTime || createRoundMut.isPending}
+          disabled={!createDate || createRoundMut.isPending}
           className="w-full bg-blue-500 text-white py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50 hover:bg-blue-600 transition-colors"
         >
           {createRoundMut.isPending ? 'Criando…' : 'Criar rodada'}
