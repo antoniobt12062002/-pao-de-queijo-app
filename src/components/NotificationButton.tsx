@@ -25,6 +25,11 @@ export default function NotificationButton() {
     }
   }
 
+  // iOS fora do standalone: só mostra instrução de instalação
+  const showInstallPrompt = isIOS() && !isStandalone()
+  // Nos demais casos (não-iOS ou iOS standalone) mostra o estado real de permissão
+  const showPermissionState = !showInstallPrompt
+
   return (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
       <div className="px-5 py-3.5 border-b border-slate-50 flex items-center gap-2">
@@ -33,8 +38,7 @@ export default function NotificationButton() {
       </div>
 
       <div className="px-5 py-4">
-        {/* iOS fora do standalone */}
-        {isIOS() && !isStandalone() && (
+        {showInstallPrompt && (
           <div className="flex gap-3 items-start">
             <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0">
               <Smartphone size={17} className="text-amber-500" />
@@ -49,8 +53,7 @@ export default function NotificationButton() {
           </div>
         )}
 
-        {/* Bloqueada */}
-        {!isIOS() && Notification.permission === 'denied' && (
+        {showPermissionState && Notification.permission === 'denied' && (
           <div className="flex gap-3 items-start">
             <div className="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
               <BellOff size={17} className="text-red-400" />
@@ -62,8 +65,7 @@ export default function NotificationButton() {
           </div>
         )}
 
-        {/* Ativa */}
-        {!isIOS() && Notification.permission === 'granted' && (
+        {showPermissionState && Notification.permission === 'granted' && (
           <div className="space-y-3">
             <div className="flex gap-3 items-center">
               <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
@@ -87,8 +89,7 @@ export default function NotificationButton() {
           </div>
         )}
 
-        {/* Não solicitada */}
-        {!isIOS() && Notification.permission === 'default' && (
+        {showPermissionState && Notification.permission === 'default' && (
           <div className="space-y-3">
             <div className="flex gap-3 items-center">
               <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0">
