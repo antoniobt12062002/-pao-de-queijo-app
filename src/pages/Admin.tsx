@@ -273,7 +273,7 @@ function AdminContent() {
           type="datetime-local"
           value={createDateTime}
           onChange={(e) => setCreateDateTime(e.target.value)}
-          className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
+          className="w-full h-11 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
         />
         <select
           value={createPayerId}

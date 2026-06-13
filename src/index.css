@@ -6,6 +6,10 @@
   * {
     -webkit-tap-highlight-color: transparent;
   }
+  /* Prevent iOS from zooming on input focus (requires font-size >= 16px) */
+  input, textarea, select {
+    font-size: max(16px, 1em);
+  }
   body {
     @apply text-slate-900 bg-slate-50 antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
