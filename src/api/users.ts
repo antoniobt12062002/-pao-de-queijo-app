@@ -26,3 +26,8 @@ export async function updateUserRole(id: string, role: 'admin' | 'dev'): Promise
 export async function deactivateUser(id: string): Promise<void> {
   await apiClient.put(`/users/${id}/deactivate`)
 }
+
+
+export async function activateUser(id: string): Promise<void> {
+  await apiClient.put(`/users/${id}/activate`)
+}

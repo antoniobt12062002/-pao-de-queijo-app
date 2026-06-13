@@ -81,3 +81,12 @@ export async function adminForceCloseRound(id: string): Promise<void> {
 export async function adminChangePayer(roundId: string, userId: string): Promise<void> {
   await apiClient.put(`/admin/rounds/${roundId}/payer`, { user_id: userId })
 }
+
+export async function adminTriggerRound(): Promise<void> {
+  await apiClient.post('/admin/trigger-round')
+}
+
+export async function getRoundsAdmin(page = 1, limit = 50): Promise<{ data: Round[]; total: number }> {
+  const { data } = await apiClient.get<{ data: Round[]; total: number; page: number; limit: number }>(`/rounds?page=${page}&limit=${limit}`)
+  return data
+}
