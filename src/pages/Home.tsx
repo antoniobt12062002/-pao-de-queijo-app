@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { CheckCircle, XCircle, Users, CalendarDays, Trophy, RotateCcw, ChevronRight, DollarSign } from 'lucide-react'
+import { CheckCircle, XCircle, Users, CalendarDays, Trophy, RotateCcw, ChevronRight } from 'lucide-react'
 import {
   getTodayRound,
   confirmRound,
@@ -10,7 +10,6 @@ import {
   removeParticipation,
   getParticipations,
   getRounds,
-  setActualCost,
 } from '../api/rounds'
 import { getUserScore } from '../api/scores'
 import { getRotation } from '../api/rotation'
@@ -40,8 +39,6 @@ export default function Home() {
   const { user } = useAuth()
   const qc = useQueryClient()
   const [quantity, setQuantity] = useState(1)
-  const [costInput, setCostInput] = useState('')
-
   const { data: round, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['round', 'today'],
     queryFn: getTodayRound,
@@ -108,17 +105,6 @@ export default function Home() {
     onSuccess: () => { invalidate(); toast.success('Participação removida.') },
     onError: () => toast.error('Erro ao remover participação.'),
   })
-  const setCostMut = useMutation({
-    mutationFn: (cost: number) => setActualCost(round!.id, cost),
-    onSuccess: () => {
-      invalidate()
-      qc.invalidateQueries({ queryKey: ['rounds'] })
-      toast.success('Custo registrado!')
-      setCostInput('')
-    },
-    onError: () => toast.error('Erro ao registrar custo.'),
-  })
-
   const recentHistory = history?.filter((r) => r.id !== round?.id).slice(0, 5)
 
   const handleRefresh = async () => {
@@ -271,52 +257,15 @@ export default function Home() {
                 </div>
               )}
 
-              {round.status === 'closed' && round.is_payer && (
+              {round.status === 'closed' && round.actual_cost != null && (
                 <div className="border-t border-slate-50 px-5 py-4">
-                  {round.actual_cost != null ? (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-500">Custo registrado</span>
-                      <span className="font-bold text-amber-600">R$ {round.actual_cost.toFixed(2)}</span>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <p className="text-xs text-slate-400 font-medium">Qual foi o custo total?</p>
-                      <div className="flex gap-2">
-                        <div className="flex-1 flex items-center gap-2 border border-slate-200 rounded-xl px-3 py-2.5">
-                          <DollarSign size={14} className="text-slate-400" />
-                          <input
-                            type="number"
-                            min="0.01"
-                            step="0.01"
-                            placeholder="0,00"
-                            value={costInput}
-                            onChange={(e) => setCostInput(e.target.value)}
-                            className="flex-1 text-sm bg-transparent focus:outline-none"
-                          />
-                        </div>
-                        <button
-                          onClick={() => {
-                            const v = parseFloat(costInput)
-                            if (!v || v <= 0) { toast.error('Digite um valor válido.'); return }
-                            setCostMut.mutate(v)
-                          }}
-                          disabled={setCostMut.isPending}
-                          className="bg-amber-500 text-white px-4 rounded-xl text-sm font-semibold disabled:opacity-50 hover:bg-amber-600 transition-colors"
-                        >
-                          Salvar
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500">Custo total</span>
+                    <span className="font-bold text-amber-600">R$ {round.actual_cost.toFixed(2)}</span>
+                  </div>
                 </div>
               )}
 
-              {round.status === 'closed' && !round.is_payer && round.actual_cost != null && (
-                <div className="border-t border-slate-50 px-5 py-3 flex items-center justify-between">
-                  <span className="text-sm text-slate-500">Custo total</span>
-                  <span className="font-bold text-amber-600">R$ {round.actual_cost.toFixed(2)}</span>
-                </div>
-              )}
             </div>
           )
         })()}
