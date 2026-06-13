@@ -12,8 +12,8 @@ firebase.initializeApp({
 const messaging = firebase.messaging()
 
 messaging.onBackgroundMessage((payload) => {
-  self.registration.showNotification(payload.notification?.title ?? 'Pão de Queijo', {
-    body: payload.notification?.body,
+  self.registration.showNotification(payload.data?.title ?? 'Pão de Queijo', {
+    body: payload.data?.body,
     icon: '/icon-192.png',
     data: { url: '/' },
   })
