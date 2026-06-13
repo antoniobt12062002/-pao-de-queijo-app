@@ -11,15 +11,10 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging()
 
-messaging.onBackgroundMessage((payload) => {
-  self.registration.showNotification(payload.data?.title ?? 'Pão de Queijo', {
-    body: payload.data?.body,
-    icon: '/icon-192.png',
-    data: { url: '/' },
-  })
-})
+// FCM exibe a notificação automaticamente via webpush.notification.
+// Não registramos onBackgroundMessage para evitar duplicatas no iOS.
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  event.waitUntil(clients.openWindow(event.notification.data?.url ?? '/'))
+  event.waitUntil(clients.openWindow('/'))
 })
