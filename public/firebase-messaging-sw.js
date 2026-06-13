@@ -11,8 +11,20 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging()
 
-// FCM exibe a notificação automaticamente via webpush.notification.
-// Não registramos onBackgroundMessage para evitar duplicatas no iOS.
+// iOS Safari requires the SW to explicitly call showNotification().
+// Chrome ignores this when webpush.notification is set (no duplicates).
+messaging.onBackgroundMessage((payload) => {
+  const n = payload.notification ?? {}
+  return self.registration.showNotification(
+    n.title ?? 'Pão de Queijo',
+    {
+      body: n.body ?? '',
+      icon: 'https://glowing-syrniki-17cec4.netlify.app/icon-192.png',
+      badge: 'https://glowing-syrniki-17cec4.netlify.app/icon-192.png',
+      data: { url: 'https://glowing-syrniki-17cec4.netlify.app/' },
+    }
+  )
+})
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
